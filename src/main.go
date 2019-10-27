@@ -3,15 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 )
 
 // Code struct defines transactioned JSON
 type Code struct {
-	Sdkgen string
-	Target string
+	Sdkgen              string
+	Target              string
+	TargetFileExtension string
 }
 
 func main() {
@@ -55,41 +58,7 @@ type Address {
 type Profile {
 	username: string
 	photoUrl: string
-}`, Target: `export interface User {
-	firstName: string;
-	lastName: string;
-  	email: string;
-  	password: string;
-  	cpf: string;
-  	birthDate: Date;
-  	gender: string;
-	status: string;
-	address: Address;
-	profile: Profile;
-}
-
-export interface Message {
-	date: Date;
-	author: string;
-	mentions: User[];
-	text?: string;
-}
-
-export interface Address {
-	countryCode: string;
-	stateCode: string;
-	city: string;
-	neighborhood: string;
-	street: string;
-	number: string;
-	complement: string;
-}
-
-export interface Profile {
-	username: string;
-	photoUrl: string;
-}
-`}
+}`, Target: ``}
 
 	encodedExampleCode, error := json.Marshal(exampleCode)
 
@@ -118,12 +87,39 @@ func gen(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	sdkgen := code.Sdkgen
+	target := code.Target
+	targetFileExtension := code.TargetFileExtension
 
 	sdkgenFile := createFile("playground.sdkgen")
 
 	defer closeFile(sdkgenFile)
 
 	writeFile(sdkgenFile, sdkgen)
+
+	command := exec.Command("bash", "sdkgen.sh", targetFileExtension, target)
+	currentDir := getCurrentDir()
+	command.Dir = currentDir
+
+	_, err := command.Output()
+
+	if err != nil {
+		http.Error(responseWriter, error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	targetCodeFileBytes, err := ioutil.ReadFile("gen/playground." + targetFileExtension)
+	target = string(targetCodeFileBytes)
+
+	encodedTargetCode, error := json.Marshal(target)
+
+	if error != nil {
+		http.Error(responseWriter, error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseWriter.Header().Set("Content-Type", "application/json")
+
+	responseWriter.Write(encodedTargetCode)
 }
 
 func createFile(path string) *os.File {
@@ -149,4 +145,14 @@ func closeFile(file *os.File) {
 func enableCors(responseWriter *http.ResponseWriter) {
 	(*responseWriter).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	(*responseWriter).Header().Set("Access-Control-Allow-Credentials", "true")
+}
+
+func getCurrentDir() string {
+	dir, err := os.Getwd()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dir
 }
