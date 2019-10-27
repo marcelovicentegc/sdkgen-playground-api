@@ -1,5 +1,7 @@
 # 🎮 sdkgen-playground-api
 
+[![Build Status](https://dev.azure.com/marcelovicentegc/public-pipes/_apis/build/status/marcelovicentegc.sdkgen-playground-api?branchName=master)](https://dev.azure.com/marcelovicentegc/public-pipes/_build/latest?definitionId=6&branchName=master)
+
 ## Development directions
 
 1. Install [Crystal](https://crystal-lang.org/reference/installation/)
