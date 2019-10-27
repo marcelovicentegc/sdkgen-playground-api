@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
-// Code struct defines compiled code
+// Code struct defines transactioned JSON
 type Code struct {
 	Sdkgen string
 	Target string
@@ -17,9 +19,6 @@ func main() {
 	http.HandleFunc("/example", example)
 	log.Println("Server is up and running on port 8080")
 	http.ListenAndServe(":8080", nil)
-}
-
-func gen(responseWriter http.ResponseWriter, request *http.Request) {
 }
 
 func example(responseWriter http.ResponseWriter, request *http.Request) {
@@ -105,6 +104,49 @@ export interface Profile {
 	responseWriter.Write(encodedExampleCode)
 }
 
+func gen(responseWriter http.ResponseWriter, request *http.Request) {
+	enableCors(&responseWriter)
+	requestBody := json.NewDecoder(request.Body)
+
+	var code Code
+
+	error := requestBody.Decode(&code)
+
+	if error != nil {
+		http.Error(responseWriter, error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sdkgen := code.Sdkgen
+
+	sdkgenFile := createFile("playground.sdkgen")
+
+	defer closeFile(sdkgenFile)
+
+	writeFile(sdkgenFile, sdkgen)
+}
+
+func createFile(path string) *os.File {
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	return file
+}
+
+func writeFile(file *os.File, content string) {
+	fmt.Fprintln(file, content)
+}
+
+func closeFile(file *os.File) {
+	err := file.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func enableCors(responseWriter *http.ResponseWriter) {
-	(*responseWriter).Header().Set("Access-Control-Allow-Origin", "*")
+	(*responseWriter).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	(*responseWriter).Header().Set("Access-Control-Allow-Credentials", "true")
 }

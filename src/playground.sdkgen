@@ -1,0 +1,34 @@
+type User {
+	firstName: string
+	lastName: string
+	email: string
+	password: string
+	cpf: string
+	birthDate: datetime
+	gender: string
+	status: string
+	address: Address
+	profile: Profile
+}
+	
+type Message {
+	date: date
+	author: User
+	mentions: User[]
+	text: string?
+}
+	
+type Address {
+	countryCode: string
+	stateCode: string
+	city: string
+	neighborhood: string
+	street: string
+	number: string
+	complement: string
+}
+	
+type Profile {
+	username: string
+	photoUrl: string
+}
