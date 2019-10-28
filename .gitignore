@@ -1,4 +1,5 @@
 *.java
 *.swift
 *.ts
+*.kt
 *.sdkgen
