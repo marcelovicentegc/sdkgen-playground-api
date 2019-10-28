@@ -104,7 +104,7 @@ func gen(responseWriter http.ResponseWriter, request *http.Request) {
 	_, err := command.Output()
 
 	if err != nil {
-		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+		http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 		return
 	}
 
