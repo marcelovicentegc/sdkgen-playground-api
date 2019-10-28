@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+
 	"net/http"
 	"os"
 	"os/exec"
@@ -103,17 +104,17 @@ func gen(responseWriter http.ResponseWriter, request *http.Request) {
 	_, err := command.Output()
 
 	if err != nil {
-		http.Error(responseWriter, error.Error(), http.StatusInternalServerError)
+		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	targetCodeFileBytes, err := ioutil.ReadFile("gen/playground." + targetFileExtension)
 	target = string(targetCodeFileBytes)
 
-	encodedTargetCode, error := json.Marshal(target)
+	encodedTargetCode, err := json.Marshal(target)
 
-	if error != nil {
-		http.Error(responseWriter, error.Error(), http.StatusInternalServerError)
+	if err != nil {
+		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -125,7 +126,8 @@ func gen(responseWriter http.ResponseWriter, request *http.Request) {
 func createFile(path string) *os.File {
 	file, err := os.Create(path)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
 	return file
 }
@@ -139,6 +141,7 @@ func closeFile(file *os.File) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
+		return
 	}
 }
 
